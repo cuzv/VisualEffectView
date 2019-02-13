@@ -19,6 +19,7 @@ open class VisualEffectView: UIVisualEffectView {
      
      The default value is nil.
      */
+    @IBInspectable
     open var colorTint: UIColor? {
         get { return _value(forKey: "colorTint") as? UIColor }
         set { _setValue(newValue, forKey: "colorTint") }
@@ -29,6 +30,7 @@ open class VisualEffectView: UIVisualEffectView {
      
      The default value is 0.0.
      */
+    @IBInspectable
     open var colorTintAlpha: CGFloat {
         get { return _value(forKey: "colorTintAlpha") as! CGFloat }
         set { _setValue(newValue, forKey: "colorTintAlpha") }
@@ -39,6 +41,7 @@ open class VisualEffectView: UIVisualEffectView {
      
      The default value is 0.0.
      */
+    @IBInspectable
     open var blurRadius: CGFloat {
         get { return _value(forKey: "blurRadius") as! CGFloat }
         set { _setValue(newValue, forKey: "blurRadius") }
@@ -51,6 +54,7 @@ open class VisualEffectView: UIVisualEffectView {
      
      The default value is 1.0.
      */
+    @IBInspectable
     open var scale: CGFloat {
         get { return _value(forKey: "scale") as! CGFloat }
         set { _setValue(newValue, forKey: "scale") }
