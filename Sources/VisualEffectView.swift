@@ -21,8 +21,20 @@ open class VisualEffectView: UIVisualEffectView {
      */
     @IBInspectable
     open var colorTint: UIColor? {
-        get { return _value(forKey: "colorTint") as? UIColor }
-        set { _setValue(newValue, forKey: "colorTint") }
+        get {
+            if #available(iOS 14, *) {
+                return contentView.backgroundColor
+            } else {
+                return _value(forKey: "colorTint") as? UIColor
+            }
+        }
+        set {
+            if #available(iOS 14, *) {
+                contentView.backgroundColor = newValue
+            } else {
+                _setValue(newValue, forKey: "colorTint")
+            }
+        }
     }
     
     /**
@@ -32,8 +44,20 @@ open class VisualEffectView: UIVisualEffectView {
      */
     @IBInspectable
     open var colorTintAlpha: CGFloat {
-        get { return _value(forKey: "colorTintAlpha") as! CGFloat }
-        set { _setValue(newValue, forKey: "colorTintAlpha") }
+        get {
+            if #available(iOS 14, *) {
+                return contentView.alpha
+            } else {
+                return _value(forKey: "colorTintAlpha") as! CGFloat
+            }
+        }
+        set {
+            if #available(iOS 14, *) {
+                contentView.alpha = newValue
+            } else {
+                _setValue(newValue, forKey: "colorTintAlpha")
+            }
+        }
     }
     
     /**
@@ -43,8 +67,20 @@ open class VisualEffectView: UIVisualEffectView {
      */
     @IBInspectable
     open var blurRadius: CGFloat {
-        get { return _value(forKey: "blurRadius") as! CGFloat }
-        set { _setValue(newValue, forKey: "blurRadius") }
+        get {
+            if #available(iOS 14, *) {
+                return _blurRadius
+            } else {
+                return _value(forKey: "blurRadius") as! CGFloat
+            }
+        }
+        set {
+            if #available(iOS 14, *) {
+                update(blurRadius: newValue)
+            } else {
+                _setValue(newValue, forKey: "blurRadius")
+            }
+        }
     }
     
     /**
@@ -74,6 +110,16 @@ open class VisualEffectView: UIVisualEffectView {
         scale = 1
     }
     
+    private var blurLayer: CALayer?
+    private var _blurRadius: CGFloat = 0
+    public override var bounds: CGRect {
+        didSet {
+            if #available(iOS 14.0, *) {
+                update(blurRadius: _blurRadius)
+                blurLayer?.frame = bounds
+            }
+        }
+    }
 }
 
 // MARK: - Helpers
@@ -94,3 +140,56 @@ private extension VisualEffectView {
 }
 
 // ["grayscaleTintLevel", "grayscaleTintAlpha", "lightenGrayscaleWithSourceOver", "colorTint", "colorTintAlpha", "colorBurnTintLevel", "colorBurnTintAlpha", "darkeningTintAlpha", "darkeningTintHue", "darkeningTintSaturation", "darkenWithSourceOver", "blurRadius", "saturationDeltaFactor", "scale", "zoom"]
+
+private extension VisualEffectView {
+    @available(iOS 10.0, *)
+    private func update(blurRadius: CGFloat) {
+        _blurRadius = blurRadius
+
+        if nil != effect {
+            effect = nil
+        }
+        
+        guard let window = window else { return }
+        let rect = convert(frame, to: window)
+        
+        if nil == blurLayer {
+            let blurLayer = CALayer()
+            blurLayer.masksToBounds = true
+            layer.addSublayer(blurLayer)
+            self.blurLayer = blurLayer
+        }
+
+        blurLayer?.isHidden = true
+
+        let image = window.snapshot(cropping: rect)
+        let blurImage = image.blur(radius: blurRadius)
+        blurLayer?.contents = blurImage.cgImage
+        blurLayer?.isHidden = false
+    }
+}
+
+extension UIView {
+    @available(iOS 10.0, *)
+    func snapshot(cropping: CGRect? = nil) -> UIImage {
+        let rect = cropping ?? bounds
+        let renderer = UIGraphicsImageRenderer(bounds: rect)
+        return renderer.image { context in
+            layer.render(in: context.cgContext)
+        }
+    }
+}
+
+extension UIImage {
+    func blur(radius: CGFloat) -> UIImage {
+        if let input = CIImage(image: self) {
+            let output = input
+                .applyingFilter("CIAffineClamp", parameters: [kCIInputTransformKey: CGAffineTransform.identity])
+                .applyingFilter("CIGaussianBlur", parameters: [kCIInputRadiusKey: radius])
+            if let cgImage = CIContext().createCGImage(output, from: input.extent) {
+                return UIImage(cgImage: cgImage, scale: scale, orientation: imageOrientation)
+            }
+        }
+        return self
+    }
+}
