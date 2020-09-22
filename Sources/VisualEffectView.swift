@@ -21,8 +21,20 @@ open class VisualEffectView: UIVisualEffectView {
      */
     @IBInspectable
     open var colorTint: UIColor? {
-        get { return _value(forKey: "colorTint") as? UIColor }
-        set { _setValue(newValue, forKey: "colorTint") }
+        get {
+            if #available(iOS 14, *) {
+                return ios14_colorTint
+            } else {
+                return _value(forKey: .colorTint)
+            }
+        }
+        set {
+            if #available(iOS 14, *) {
+                ios14_colorTint = newValue
+            } else {
+                _setValue(newValue, forKey: .colorTint)
+            }
+        }
     }
     
     /**
@@ -32,8 +44,14 @@ open class VisualEffectView: UIVisualEffectView {
      */
     @IBInspectable
     open var colorTintAlpha: CGFloat {
-        get { return _value(forKey: "colorTintAlpha") as! CGFloat }
-        set { _setValue(newValue, forKey: "colorTintAlpha") }
+        get { return _value(forKey: .colorTintAlpha) }
+        set {
+            if #available(iOS 14, *) {
+                ios14_colorTint = ios14_colorTint?.withAlphaComponent(newValue)
+            } else {
+                _setValue(newValue, forKey: .colorTintAlpha)
+            }
+        }
     }
     
     /**
@@ -43,8 +61,20 @@ open class VisualEffectView: UIVisualEffectView {
      */
     @IBInspectable
     open var blurRadius: CGFloat {
-        get { return _value(forKey: "blurRadius") as! CGFloat }
-        set { _setValue(newValue, forKey: "blurRadius") }
+        get {
+            if #available(iOS 14, *) {
+                return ios14_blurRadius
+            } else {
+                return _value(forKey: .blurRadius)
+            }
+        }
+        set {
+            if #available(iOS 14, *) {
+                ios14_blurRadius = newValue
+            } else {
+                _setValue(newValue, forKey: .blurRadius)
+            }
+        }
     }
     
     /**
@@ -56,8 +86,8 @@ open class VisualEffectView: UIVisualEffectView {
      */
     @IBInspectable
     open var scale: CGFloat {
-        get { return _value(forKey: "scale") as! CGFloat }
-        set { _setValue(newValue, forKey: "scale") }
+        get { return _value(forKey: .scale) }
+        set { _setValue(newValue, forKey: .scale) }
     }
     
     // MARK: - Initialization
@@ -81,14 +111,18 @@ open class VisualEffectView: UIVisualEffectView {
 private extension VisualEffectView {
     
     /// Returns the value for the key on the blurEffect.
-    func _value(forKey key: String) -> Any? {
-        return blurEffect.value(forKeyPath: key)
+    func _value<T>(forKey key: Key) -> T {
+        return blurEffect.value(forKeyPath: key.rawValue) as! T
     }
     
     /// Sets the value for the key on the blurEffect.
-    func _setValue(_ value: Any?, forKey key: String) {
-        blurEffect.setValue(value, forKeyPath: key)
+    func _setValue<T>(_ value: T, forKey key: Key) {
+        blurEffect.setValue(value, forKeyPath: key.rawValue)
         self.effect = blurEffect
+    }
+    
+    enum Key: String {
+        case colorTint, colorTintAlpha, blurRadius, scale
     }
     
 }
